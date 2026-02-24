@@ -1,0 +1,65 @@
+# === Bash Alias Self-Management Toolkit ===
+
+ALIAS_FILE="$HOME/.bash_aliases"
+ALIAS_BACKUP_DIR="$HOME/back_alias_backup"
+
+# Ensure backup directory exists
+mkdir -p "$ALIAS_BACKUP_DIR"
+
+# Edit aliases
+aliasedit() {
+    nano "$ALIAS_FILE"
+}
+
+# Reload aliases
+aliasup() {
+    source "$ALIAS_FILE"
+    echo "Aliases reloaded."
+}
+
+# Alternate reload command
+aliasupdate() {
+    aliasup
+}
+
+# Create timestamped backup
+aliasbackup() {
+    local timestamp
+    timestamp=$(date +"%Y-%m-%d_%H-%M-%S")
+    local backup_file="$ALIAS_BACKUP_DIR/.bash_aliases_$timestamp"
+
+    cp "$ALIAS_FILE" "$backup_file"
+
+    echo "Backup created:"
+    echo "$backup_file"
+}
+
+# Restore from backup (interactive)
+aliasrestore() {
+    local files=("$ALIAS_BACKUP_DIR"/.bash_aliases_*)
+
+    if [ ! -e "${files[0]}" ]; then
+        echo "No backups found in $ALIAS_BACKUP_DIR"
+        return 1
+    fi
+
+    echo "Available backups:"
+    select file in "${files[@]}"; do
+        if [ -n "$file" ]; then
+            # Safety backup before restore
+            cp "$ALIAS_FILE" \
+               "$ALIAS_BACKUP_DIR/.bash_aliases_pre_restore_$(date +"%Y-%m-%d_%H-%M-%S")"
+
+            cp "$file" "$ALIAS_FILE"
+
+            echo "Restored from:"
+            echo "$file"
+            echo "Run 'aliasup' to reload."
+            break
+        else
+            echo "Invalid selection."
+        fi
+    done
+}
+
+# === End of Bash Alias Self-Management Toolkit ===
